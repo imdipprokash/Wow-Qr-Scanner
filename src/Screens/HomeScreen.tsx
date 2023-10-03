@@ -26,7 +26,8 @@ const HomeScreen = (props: Props) => {
 
       <QRCodeScanner
         onRead={e => {
-          const urlString = e?.rawData;
+          const urlString = e?.data;
+          console.log(e);
           if (urlString) {
             if (
               urlString.includes('http://') ||
