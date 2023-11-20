@@ -1,99 +1,86 @@
 import {
+  Linking,
+  StatusBar,
   StyleSheet,
   Text,
-  View,
-  StatusBar,
   TouchableOpacity,
-  Linking,
+  View,
+  Vibration,
 } from 'react-native';
 import React, {useState} from 'react';
-import CustomHeader from '../Components/CustomHeader';
-import {MAIN_STYLE, SCREEN_HEIGHT, SCREEN_WIDTH} from '../utils/Style';
-import QRCodeScanner from 'react-native-qrcode-scanner';
+import {BarCodeReadEvent, RNCamera} from 'react-native-camera';
+import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../utils/Style';
+import LinearGradient from 'react-native-linear-gradient';
 
 type Props = {};
 
 const HomeScreen = (props: Props) => {
-  const [QRValue, setQRValue] = useState<
-    {value: string; type: string} | undefined
-  >();
+  const [cameraScannedValue, setCameraScannedValue] =
+    useState<BarCodeReadEvent | null>(null);
+    
+  const onBarCodeRead = (result: BarCodeReadEvent) => {
+    setCameraScannedValue(result);
+    Vibration.vibrate(200);
+  };
   return (
-    <View style={[MAIN_STYLE.Main_Container]}>
-      <StatusBar backgroundColor={'#fff'} barStyle={'dark-content'} />
-      <CustomHeader />
+    <View style={{flex: 1}}>
+      <LinearGradient
+        colors={['#1f2f98', '#3b5998', '#097581']} // Adjust gradient colors
+        start={{x: 1, y: 0}}
+        end={{x: 1, y: 1}}
+        style={{flex: 1, alignItems: 'center'}}>
+        <StatusBar backgroundColor={'#1f2f98'} barStyle={'light-content'} />
+        <Text
+          style={{
+            color: '#fff',
+            fontSize: 28,
+            marginVertical: 20,
+            fontWeight: '800',
+          }}>
+          Distronix QR
+        </Text>
+        <RNCamera
+          style={{
+            height: SCREEN_HEIGHT * 0.3,
+            width: SCREEN_WIDTH * 0.6,
+            borderRadius: 20,
+            overflow: 'hidden',
+          }}
+          type={RNCamera.Constants.Type.back}
+          captureAudio={false}
+          onBarCodeRead={onBarCodeRead}
+        />
 
-      {/* QR  */}
-
-      <QRCodeScanner
-        onRead={e => {
-          const urlString = e?.data;
-          console.log(e);
-          if (urlString) {
-            if (
-              urlString.includes('http://') ||
-              urlString.includes('https://')
-            ) {
-              setQRValue({
-                value: urlString,
-                type: 'url',
-              });
-              console.log("The URL contains 'http' or 'https'.");
-            } else {
-              console.log("The URL does not contain 'http' or 'https'.");
-              setQRValue({
-                value: urlString,
-                type: 'text',
-              });
+        <TouchableOpacity
+          onPress={() => {
+            if (cameraScannedValue?.data.includes('http')) {
+              Linking.openURL(cameraScannedValue?.data).catch(err =>
+                console.error('An error occurred', err),
+              );
             }
-          }
-        }}
-        containerStyle={{
-          width: SCREEN_WIDTH,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: -SCREEN_HEIGHT * 0.4,
-          // marginBottom: -SCREEN_HEIGHT * 0.4,
-        }}
-        cameraStyle={{
-          width: SCREEN_WIDTH * 0.7,
-          height: SCREEN_HEIGHT * 0.3,
-          borderRadius: 20,
-          overflow: 'hidden',
-        }}
-        // flashMode={RNCamera.Constants.FlashMode.torch}
-        // topContent={
-        //   <Text style={{}}>
-        //     Go to <Text style={{}}>wikipedia.org/wiki/QR_code</Text> on your
-        //     computer and scan the QR code.
-        //   </Text>
-        // }
-        bottomContent={
-          <TouchableOpacity
-            onPress={() => {
-              QRValue?.type === 'url' &&
-                Linking.openURL(QRValue.value).catch(err =>
-                  console.error('An error occurred', err),
-                );
-            }}
+          }}
+          style={{
+            margin: 20,
+            marginTop: 30,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            backgroundColor: '#fff',
+            borderRadius: 10,
+          }}>
+          <Text
             style={{
-              backgroundColor: '#ead4c4',
-              marginHorizontal: SCREEN_WIDTH * 0.1,
-              marginVertical: SCREEN_HEIGHT * 0.01,
-              paddingHorizontal: SCREEN_WIDTH * 0.05,
-              paddingVertical: SCREEN_HEIGHT * 0.015,
-              borderRadius: 10,
+              color: cameraScannedValue?.data.includes('http')
+                ? '#242fcc'
+                : '#000',
+              fontSize: 20,
+              textDecorationLine: cameraScannedValue?.data.includes('http')
+                ? 'underline'
+                : 'none',
             }}>
-            <Text
-              style={{
-                fontSize: SCREEN_HEIGHT * 0.02,
-                textDecorationLine:
-                  QRValue?.type === 'url' ? 'underline' : 'none',
-              }}>
-              {QRValue?.value}
-            </Text>
-          </TouchableOpacity>
-        }
-      />
+            {cameraScannedValue?.data}
+          </Text>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 };
